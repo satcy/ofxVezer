@@ -170,7 +170,8 @@ namespace ofx { namespace vezer{
                     return tracks[i];
                 }
             }
-            return NULL;
+            Track track;
+            return track;
         }
     };
 
@@ -237,7 +238,14 @@ namespace ofx { namespace vezer{
                         ofSetColor(255);
                         float x = frame*scale;
                         float y = (i+1)*hh - (hh - 5);
+                        ofFill();
                         ofRect(x, y, 1, (hh - 5));
+                    } else if ( proc.type == Proc::TYPE_FLOAT_COLOR ) {
+                        ofSetColor(proc.color);
+                        float x = frame*scale;
+                        float y = (i+1)*hh - (hh - 5);
+                        ofFill();
+                        ofRect(x, y, scale, (hh - 5));
                     }
                 }
                 ofEndShape();
