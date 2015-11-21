@@ -39,28 +39,9 @@ namespace ofx { namespace vezer{
                 ofxOscMessage * m;
                 ofxVezer::Proc proc;
                 if ( comp.tracks[i].getProcess(frame, &proc) ) {
-                    if ( proc.type == ofxVezer::Proc::TYPE_INT ) {
-                        m = new ofxOscMessage();
-                        m->setAddress(address);
-                        m->addIntArg(proc.int_value);
-                        addMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLOAT ) {
-                        m = new ofxOscMessage();
-                        m->setAddress(address);
-                        m->addFloatArg(proc.float_value);
-                        addMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLOAT_COLOR ) {
-                        m = new ofxOscMessage();
-                        m->setAddress(address);
-                        m->addFloatArg(proc.color.r);
-                        m->addFloatArg(proc.color.g);
-                        m->addFloatArg(proc.color.b);
-                        addMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLAG ) {
-                        m = new ofxOscMessage();
-                        m->setAddress(proc.flag_value);
-                        addMessage(m);
-                    }
+                    m = new ofxOscMessage();
+                    m->copy(proc);
+                    addMessage(m);
                 }
             }
         }
@@ -71,24 +52,7 @@ namespace ofx { namespace vezer{
                 ofxOscMessage m;
                 ofxVezer::Proc proc;
                 if ( comp.tracks[i].getProcess(frame, &proc) ) {
-                    if ( proc.type == ofxVezer::Proc::TYPE_INT ) {
-                        m.setAddress(address);
-                        m.addIntArg(proc.int_value);
-                        send.sendMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLOAT ) {
-                        m.setAddress(address);
-                        m.addFloatArg(proc.float_value);
-                        send.sendMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLOAT_COLOR ) {
-                        m.setAddress(address);
-                        m.addFloatArg(proc.color.r);
-                        m.addFloatArg(proc.color.g);
-                        m.addFloatArg(proc.color.b);
-                        send.sendMessage(m);
-                    } else if ( proc.type == ofxVezer::Proc::TYPE_FLAG ) {
-                        m.setAddress(proc.flag_value);
-                        send.sendMessage(m);
-                    }
+                    send.sendMessage(proc);
                 }
             }
         }

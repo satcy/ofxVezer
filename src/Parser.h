@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxXmlSettings.h"
+#include "ofxOscMessage.h"
 
 namespace ofx { namespace vezer{
     
@@ -17,64 +18,76 @@ namespace ofx { namespace vezer{
     const string OSC_COLOR_MULTIINT = "OSCColor/multiint";
     const string OSC_COLOR_MULTIFLOAT = "OSCColor/multifloat";
     
-    class Proc {
+    class Proc : public ofxOscMessage {
     public:
         int frame;
         int type;
-        int int_value;
-        float float_value;
-        string flag_value;
-        ofFloatColor color;
         
     public:
         friend Parser;
         
-        static const int TYPE_INT = 0;
-        static const int TYPE_FLOAT = 1;
-        static const int TYPE_FLOAT_COLOR = 2;
-        static const int TYPE_FLAG = 3;
-        
+        enum TYPE_OF_PARAMES {
+            TYPE_INT,
+            TYPE_FLOAT,
+            TYPE_FLOAT_COLOR,
+            TYPE_FLAG,
+        };
         
         Proc(){
             type = 0;
         }
         
-        Proc(int f, int val){
+        Proc(string addr, int f, int32_t val){
             frame = f;
             type = TYPE_INT;
-            int_value = val;
+            setAddress(addr);
+            addIntArg(val);
         }
         
-        Proc(int f, double val){
+        Proc(string addr, int f, double val){
             frame = f;
             type = TYPE_FLOAT;
-            float_value = val;
+            setAddress(addr);
+            addFloatArg(val);
         }
         
-        Proc(int f, float r, float g, float b){
+        Proc(string addr, int f, float r, float g, float b){
             frame = f;
             type = TYPE_FLOAT_COLOR;
-            color.set(r, g, b, 1.0);
+            setAddress(addr);
+            addFloatArg(r);
+            addFloatArg(g);
+            addFloatArg(b);
+            
         }
         
-        Proc(int f, string s){
+        Proc(string addr, int f, string s){
             frame = f;
             type = TYPE_FLAG;
-            flag_value = s;
+            vector<string> args = ofSplitString(s, ",");
+            if ( args.size() == 1 ) {
+                setAddress(s);
+            } else {
+                setAddress(args[0]);
+
+                for ( int i=1; i<args.size(); i++ ) {
+                    float val = ofFromString<float>(args[i]);
+                    addFloatArg(val);
+                }
+            }
         }
         
         void copy( const Proc& other ){
             frame = other.frame;
             type = other.type;
-            int_value = other.int_value;
-            float_value = other.float_value;
-            flag_value = other.flag_value;
-            color = other.color;
+            ofxOscMessage::copy(other);
         }
     };
         
     class Track{
     public:
+        bool isGroup;
+        int group_index;
         bool state;
         string address;
         string name;
@@ -95,6 +108,9 @@ namespace ofx { namespace vezer{
             
             current = -1;
             process.clear();
+            
+            isGroup = false;
+            group_index = 0;
         }
         
         Proc& getCurrentProc(){
@@ -164,14 +180,14 @@ namespace ofx { namespace vezer{
             return tmp_tracks;
         }
         
-        Track & getTrackByName(string name){
+        bool getTrackByName(string name, Track & track){
             for ( int i=0; i<tracks.size(); i++ ) {
                 if ( tracks[i].name == name ) {
-                    return tracks[i];
+                    track = tracks[i];
+                    return true;
                 }
             }
-            Track track;
-            return track;
+            return false;
         }
     };
 
@@ -219,7 +235,7 @@ namespace ofx { namespace vezer{
                     int frame = track.process[j].frame;
                     Proc proc = track.process[j];
                     if ( proc.type == Proc::TYPE_FLOAT ) {
-                        float val = ofMap( proc.float_value, track.min, track.max, 0., 1.0);
+                        float val = ofMap( proc.getArgAsFloat(0), track.min, track.max, 0., 1.0);
                         ofSetColor(255);
                         float x = frame*scale;
                         float y = (i+1)*hh - val * (hh - 5);
@@ -227,7 +243,7 @@ namespace ofx { namespace vezer{
                         
                         //ofCircle(frame*scale, (i+1)*hh - val * (hh - 5) , 2);
                     } else if ( proc.type == Proc::TYPE_INT ) {
-                        float val = ofMap( proc.int_value, track.min, track.max, 0., 1.0);
+                        float val = ofMap( proc.getArgAsInt32(0), track.min, track.max, 0., 1.0);
                         ofSetColor(255);
                         float x = frame*scale;
                         float y = (i+1)*hh - val * (hh - 5);
@@ -241,13 +257,14 @@ namespace ofx { namespace vezer{
                         ofFill();
                         ofRect(x, y, 1, (hh - 5));
                     } else if ( proc.type == Proc::TYPE_FLOAT_COLOR ) {
-                        ofSetColor(proc.color);
+                        ofSetColor(proc.getArgAsFloat(0)*255, proc.getArgAsFloat(1)*255, proc.getArgAsFloat(2)*255);
                         float x = frame*scale;
                         float y = (i+1)*hh - (hh - 5);
                         ofFill();
                         ofRect(x, y, scale, (hh - 5));
                     }
                 }
+                
                 ofEndShape();
                 ofSetColor(0,255,0);
                 ofDrawBitmapString(track.name + " : " + track.address, 10, i*hh+15);
@@ -289,6 +306,7 @@ namespace ofx { namespace vezer{
                                 track.type = xml.getValue("type", OSC_VALUE_FLOAT);
                                 track.min = xml.getValue("min", 0.0);
                                 track.max = xml.getValue("max", 1.0);
+                                
                                 if ( xml.pushTag("target") ) {
                                     track.address = xml.getValue("address", "/exapmle");
                                     xml.popTag();
@@ -299,11 +317,11 @@ namespace ofx { namespace vezer{
                                         string n = "f" + ofToString(k);
                                         if ( xml.tagExists(n) ) {
                                             if ( track.type == OSC_VALUE_INT ) {
-                                                track.process.push_back(Proc(k, (int)xml.getValue(n, 0) ));
+                                                track.process.push_back(Proc(track.address, k, (int)xml.getValue(n, 0) ));
                                             } else if ( track.type == OSC_VALUE_FLOAT ) {
-                                                track.process.push_back(Proc(k, xml.getValue(n, 0.0)));
+                                                track.process.push_back(Proc(track.address, k, xml.getValue(n, 0.0)));
                                             } else if ( track.type == OSC_FLAG ) {
-                                                track.process.push_back(Proc(k, xml.getValue(n, "")));
+                                                track.process.push_back(Proc(track.address, k, xml.getValue(n, "")));
                                             } else if ( track.type == OSC_COLOR_STANDARD || track.type == OSC_COLOR_FLOATARRAY || track.type == OSC_COLOR_MULTIFLOAT ) {
                                                 string s = xml.getValue(n, "0,0,0");
                                                 vector<string> arr = ofSplitString(s, ",");
@@ -311,7 +329,7 @@ namespace ofx { namespace vezer{
                                                     float r = ofToFloat(arr[0]);
                                                     float g = ofToFloat(arr[1]);
                                                     float b = ofToFloat(arr[2]);
-                                                    track.process.push_back(Proc(k, r, g, b ));
+                                                    track.process.push_back(Proc(track.address, k, r, g, b ));
                                                 }
                                             } else if ( track.type == OSC_COLOR_INTARRAY || track.type == OSC_COLOR_MULTIINT ) {
                                                 string s = xml.getValue(n, "0,0,0");
@@ -320,7 +338,7 @@ namespace ofx { namespace vezer{
                                                     float r = ofToFloat(arr[0]) / 255.0;
                                                     float g = ofToFloat(arr[1]) / 255.0;
                                                     float b = ofToFloat(arr[2]) / 255.0;
-                                                    track.process.push_back(Proc(k, r, g, b ));
+                                                    track.process.push_back(Proc(track.address, k, r, g, b ));
                                                 }
                                             }
                                         }
@@ -334,11 +352,46 @@ namespace ofx { namespace vezer{
                     }
                     xml.popTag();
                     xml.popTag();
+                    //mergeGroupTracks(comp.tracks);
                     result.push_back(comp);
                 }
             }
             compositions = result;
             return result;
+        }
+        
+    protected:
+        void mergeGroupTracks(vector<Track> & tracks){//todo
+            map<string, Track> temp_tracks;
+            vector<Track> use_tracks;
+            for ( int i=0; i<tracks.size(); i++ ) {
+                Track track = tracks[i];
+                vector<string> addr_vals = ofSplitString(track.address, "#");
+                if ( addr_vals.size() > 1 ) {
+                    int index = ofFromString<int>(addr_vals[1]);
+                    cout << index << endl;
+                    track.isGroup = true;
+                    track.group_index =  index;
+                    string addr = addr_vals[0];
+                    
+                    
+                    if ( temp_tracks.find(addr) != temp_tracks.end() ) {
+                        Track & find_track = temp_tracks[addr];
+                        
+                    } else {
+                        Track new_track;
+                        new_track.address = addr;
+                        new_track.process = track.process;
+                        new_track.name = track.name;
+                        temp_tracks[addr] = new_track;
+                        use_tracks.push_back(new_track);
+                    }
+                    //use_tracks.push_back(track);
+                } else {
+                    use_tracks.push_back(track);
+                }
+            }
+            tracks = use_tracks;
         }
     };
 

@@ -28,7 +28,7 @@ public:
         radius = 300;
         
 #ifdef USE_VEZER_XML
-        vector<ofxVezer::Composition> comps = parser.load("test.xml");
+        vector<ofxVezer::Composition> comps = parser.load("test2.xml");
         comp = comps[0];
         parser.redraw(comp);
 #else
