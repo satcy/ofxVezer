@@ -15,6 +15,7 @@ namespace ofx { namespace vezer{
         }
         
         bool getNextMessage( ofxOscMessage* message ) {
+
             if ( messages.size() == 0 )
             {
                 return false;
@@ -22,7 +23,7 @@ namespace ofx { namespace vezer{
             
             ofxOscMessage* src_message = messages.front();
             message->copy( *src_message );
-            
+
             delete src_message;
             messages.pop_front();
             

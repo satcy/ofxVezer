@@ -4,6 +4,9 @@
 #include "ofxXmlSettings.h"
 #include "ofxOscMessage.h"
 
+#include "Poco/RegularExpression.h"
+using Poco::RegularExpression;
+
 namespace ofx { namespace vezer{
     
     class Parser;
@@ -71,10 +74,21 @@ namespace ofx { namespace vezer{
                 setAddress(args[0]);
 
                 for ( int i=1; i<args.size(); i++ ) {
-                    float val = ofFromString<float>(args[i]);
-                    addFloatArg(val);
+                    //cout << args[i] << "," << isNumberString(args[i]) <<  endl;
+                    if ( isNumberString(args[i]) ) {
+                        float val = ofFromString<float>(args[i]);
+                        addFloatArg(val);
+                    } else {
+                        addStringArg(args[i]);
+                    }
                 }
             }
+            
+        }
+        
+        bool isNumberString(const string & s){
+            RegularExpression regEx("^[+-]?([0-9]*\.[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+|)");
+            return regEx.match(s);
         }
         
         void copy( const Proc& other ){
@@ -153,6 +167,45 @@ namespace ofx { namespace vezer{
             return b ? current : -1;
         }
         
+        bool getFirstProcess(Proc * proc){
+            if ( process.empty() ) return false;
+            else {
+                proc->copy(process[0]);
+                return true;
+            }
+        }
+        
+        bool getLastProcess(Proc * proc){
+            if ( process.empty() ) return false;
+            else {
+                proc->copy(process.back());
+                return true;
+            }
+        }
+        
+        bool getLazyFrameProcess(int frame, Proc * proc){
+            if ( !state ) return false;
+            if ( process.empty() ) return false;
+            bool b = false;
+            
+            int index = getProcessIndex(frame);
+            if ( index > -1 ) {
+                proc->copy(process[index]);
+                b = true;
+            } else {
+                while ( index != -1 ) {
+                    frame--;
+                    index = getProcessIndex(frame);
+                    if ( frame < 0 ) break;
+                }
+                if ( frame >= 0 ) {
+                    proc->copy(process[index]);
+                    b = true;
+                }
+            }
+            
+            return b;
+        }
     };
         
     class Composition{
