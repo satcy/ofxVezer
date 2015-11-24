@@ -20,6 +20,7 @@ class ofApp : public ofBaseApp{
     float radius;
     vector<ofFloatColor> colors;
     vector<float> rotations;
+    ofVec3f rot;
 public:
     
     void setup(){
@@ -66,6 +67,10 @@ public:
             } else if ( addr == "/example" ) {
                 ofSetCircleResolution(ofRandom(3,10));
                 radius = ofRandom(300);
+            } else if ( addr == "/group" ) {
+                rot.x = m.getArgAsFloat(0);
+                rot.y = m.getArgAsFloat(1);
+                rot.z = m.getArgAsFloat(2);
             }
         }
         
@@ -76,7 +81,7 @@ public:
         ofPushStyle();
         ofPushMatrix();
         ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
-        
+        ofFill();
         for ( int i=0; i<rotations.size(); i++ ) {
             if ( i < colors.size() ) ofSetColor(colors[i]);
             ofRotate(rotations[i]);
@@ -85,6 +90,17 @@ public:
             ofCircle(0, 0, radius+i*6);
         }
         ofPopMatrix();
+        
+        ofPushMatrix();
+        ofNoFill();
+        ofSetColor(255);
+        ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+        ofRotateX(rot.x);
+        ofRotateY(rot.y);
+        ofRotateZ(rot.z);
+        ofDrawBox(0, 0, 0, 200);
+        ofPopMatrix();
+        
         ofPopStyle();
         
 #ifdef USE_VEZER_XML

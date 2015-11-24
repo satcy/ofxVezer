@@ -100,7 +100,6 @@ namespace ofx { namespace vezer{
         
     class Track{
     public:
-        bool isGroup;
         int group_index;
         bool state;
         string address;
@@ -123,7 +122,6 @@ namespace ofx { namespace vezer{
             current = -1;
             process.clear();
             
-            isGroup = false;
             group_index = 0;
         }
         
@@ -131,10 +129,23 @@ namespace ofx { namespace vezer{
             return process[ofClamp(current, 0, process.size()-1)];
         }
         
+        void sortProcess(){
+            ofSort(process, compareByFrame);
+        }
+        
+        static inline bool compareByFrame(const Proc & a, const Proc & b){
+            return a.frame < b.frame;
+        }
+        
         bool getProcess(int frame, Proc * proc){
             if ( !state ) return false;
             if ( process.empty() ) return false;
             bool b = false;
+            
+//            if ( process.find(frame) != process.end() ) {
+//                proc->copy(process[frame]);
+//                b = true;
+//            }
             
             int index = getProcessIndex(frame);
             if ( index > -1 ) {
@@ -145,6 +156,13 @@ namespace ofx { namespace vezer{
             return b;
         }
         
+//        int getProcessIndex(int frame){
+//            if ( process.find(frame) != process.end() ) {
+//                return 0;
+//            } else {
+//                return -1;
+//            }
+//        }
         int getProcessIndex(int frame){
             if ( !state ) return -1;
             if ( process.empty() ) return -1;
@@ -171,6 +189,7 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             else {
                 proc->copy(process[0]);
+//                proc->copy(process.begin()->second);
                 return true;
             }
         }
@@ -179,6 +198,7 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             else {
                 proc->copy(process.back());
+//                proc->copy((process.end()--)->second);
                 return true;
             }
         }
@@ -188,6 +208,20 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             bool b = false;
             
+//            if ( process.find(frame) != process.end() ) {
+//                proc->copy(process[frame]);
+//                b = true;
+//            } else {
+//                while ( process.find(frame) == process.end() ) {
+//                    frame--;
+//                    if ( frame < 0 ) break;
+//                }
+//                if ( frame >= 0 ) {
+//                    proc->copy(process[frame]);
+//                    b = true;
+//                }
+//            }
+//            
             int index = getProcessIndex(frame);
             if ( index > -1 ) {
                 proc->copy(process[index]);
@@ -405,7 +439,7 @@ namespace ofx { namespace vezer{
                     }
                     xml.popTag();
                     xml.popTag();
-                    //mergeGroupTracks(comp.tracks);
+                    mergeGroupTracks(comp.tracks);
                     result.push_back(comp);
                 }
             }
@@ -414,35 +448,94 @@ namespace ofx { namespace vezer{
         }
         
     protected:
+        static bool compareGroupIndex(Track a, Track b){ return a.group_index < b.group_index; }
+        
         void mergeGroupTracks(vector<Track> & tracks){//todo
-            map<string, Track> temp_tracks;
+            vector<string> grouped_addresses;
+            map<string, vector<Track> > grouped_tracks;
             vector<Track> use_tracks;
             for ( int i=0; i<tracks.size(); i++ ) {
                 Track track = tracks[i];
                 vector<string> addr_vals = ofSplitString(track.address, "#");
-                if ( addr_vals.size() > 1 ) {
-                    int index = ofFromString<int>(addr_vals[1]);
-                    cout << index << endl;
-                    track.isGroup = true;
-                    track.group_index =  index;
-                    string addr = addr_vals[0];
-                    
-                    
-                    if ( temp_tracks.find(addr) != temp_tracks.end() ) {
-                        Track & find_track = temp_tracks[addr];
+                if ( addr_vals.size() == 2 && !track.process.empty() ) {
+                    if ( track.state ) {
+                        int index = ofFromString<int>(addr_vals[1]);
+                        string addr = addr_vals[0];
+                        track.group_index = index;
+                        track.address = addr;
                         
-                    } else {
-                        Track new_track;
-                        new_track.address = addr;
-                        new_track.process = track.process;
-                        new_track.name = track.name;
-                        temp_tracks[addr] = new_track;
-                        use_tracks.push_back(new_track);
+                        if ( !ofContains(grouped_addresses, addr) ) grouped_addresses.push_back(addr);
+                        
+                        grouped_tracks[addr].push_back(track);
                     }
-                    //use_tracks.push_back(track);
                 } else {
-                    use_tracks.push_back(track);
+                    if ( !track.process.empty() ) use_tracks.push_back(track);
                 }
+            }
+            
+            for ( auto s : grouped_addresses ) {
+                if ( grouped_tracks[s].size() == 1 ) continue;
+                
+                ofSort(grouped_tracks[s], compareGroupIndex);
+                
+                Track & t = grouped_tracks[s][0];
+                
+                for ( int i=1; i<grouped_tracks[s].size(); i++ ) {
+                    Track track = grouped_tracks[s][i];
+                    
+                    Proc a;
+                    Proc b;
+                    if ( t.getFirstProcess(&a) && track.getFirstProcess(&b) ) {
+                        if ( a.frame < b.frame ) {
+                            while( a.frame < b.frame ){
+                                b.frame--;
+                                track.process.push_back(b);
+                            }
+                            t.sortProcess();
+                        } else if ( a.frame > b.frame ) {
+                            while( a.frame > b.frame ){
+                                a.frame--;
+                                t.process.push_back(a);
+                            }
+                            t.sortProcess();
+                        }
+                    }
+                    if ( t.getLastProcess(&a) && track.getLastProcess(&b) ) {
+                        if ( a.frame > b.frame ) {
+                            while( a.frame > b.frame ){
+                                b.frame++;
+                                track.process.push_back(b);
+                            }
+                            t.sortProcess();
+                        } else if ( a.frame < b.frame ) {
+                            while( a.frame < b.frame ){
+                                a.frame++;
+                                t.process.push_back(a);
+                            }
+                            t.sortProcess();
+                        }
+                    }
+                }
+                
+                for ( int j=0; j<t.process.size(); j++ ) {
+                    Proc & a = t.process[j];
+                    a.setAddress(t.address);
+                    for ( int i=1; i<grouped_tracks[s].size(); i++ ) {
+                        Track track = grouped_tracks[s][i];
+                        
+                        Proc b;
+                        if ( track.getProcess(a.frame, &b) ) {
+                            if ( b.getArgType(0) == OFXOSC_TYPE_FLOAT ) {
+                                a.addFloatArg(b.getArgAsFloat(0));
+                            } else if ( b.getArgType(0) == OFXOSC_TYPE_INT32 ) {
+                                a.addIntArg(b.getArgAsInt32(0));
+                            }
+                        }
+                        
+                    }
+                }
+                
+                use_tracks.push_back(t);
             }
             tracks = use_tracks;
         }
