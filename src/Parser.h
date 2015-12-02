@@ -14,7 +14,8 @@ namespace ofx { namespace vezer{
     const string OSC_VALUE_INT = "OSCValue/int";
     const string OSC_VALUE_FLOAT = "OSCValue/float";
     const string OSC_FLAG = "OSCFlag";
-     
+    const string MIDI_NOTES = "MidiNotes";
+    
     const string OSC_COLOR_STANDARD = "OSCColor/standard";
     const string OSC_COLOR_INTARRAY = "OSCColor/intarray";
     const string OSC_COLOR_FLOATARRAY = "OSCColor/floatarray";
@@ -72,7 +73,7 @@ namespace ofx { namespace vezer{
                 setAddress(s);
             } else {
                 setAddress(args[0]);
-
+                
                 for ( int i=1; i<args.size(); i++ ) {
                     //cout << args[i] << "," << isNumberString(args[i]) <<  endl;
                     if ( isNumberString(args[i]) ) {
@@ -97,7 +98,7 @@ namespace ofx { namespace vezer{
             ofxOscMessage::copy(other);
         }
     };
-        
+    
     class Track{
     public:
         int group_index;
@@ -142,10 +143,10 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             bool b = false;
             
-//            if ( process.find(frame) != process.end() ) {
-//                proc->copy(process[frame]);
-//                b = true;
-//            }
+            //            if ( process.find(frame) != process.end() ) {
+            //                proc->copy(process[frame]);
+            //                b = true;
+            //            }
             
             int index = getProcessIndex(frame);
             if ( index > -1 ) {
@@ -156,13 +157,13 @@ namespace ofx { namespace vezer{
             return b;
         }
         
-//        int getProcessIndex(int frame){
-//            if ( process.find(frame) != process.end() ) {
-//                return 0;
-//            } else {
-//                return -1;
-//            }
-//        }
+        //        int getProcessIndex(int frame){
+        //            if ( process.find(frame) != process.end() ) {
+        //                return 0;
+        //            } else {
+        //                return -1;
+        //            }
+        //        }
         int getProcessIndex(int frame){
             if ( !state ) return -1;
             if ( process.empty() ) return -1;
@@ -176,7 +177,7 @@ namespace ofx { namespace vezer{
                 if ( frame >= f ) {
                     if ( current != i  ) {
                         current = i;
-                     //cout << _current << endl;
+                        //cout << _current << endl;
                         b = true;
                     }
                     break;
@@ -189,7 +190,7 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             else {
                 proc->copy(process[0]);
-//                proc->copy(process.begin()->second);
+                //                proc->copy(process.begin()->second);
                 return true;
             }
         }
@@ -198,7 +199,7 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             else {
                 proc->copy(process.back());
-//                proc->copy((process.end()--)->second);
+                //                proc->copy((process.end()--)->second);
                 return true;
             }
         }
@@ -208,20 +209,20 @@ namespace ofx { namespace vezer{
             if ( process.empty() ) return false;
             bool b = false;
             
-//            if ( process.find(frame) != process.end() ) {
-//                proc->copy(process[frame]);
-//                b = true;
-//            } else {
-//                while ( process.find(frame) == process.end() ) {
-//                    frame--;
-//                    if ( frame < 0 ) break;
-//                }
-//                if ( frame >= 0 ) {
-//                    proc->copy(process[frame]);
-//                    b = true;
-//                }
-//            }
-//            
+            //            if ( process.find(frame) != process.end() ) {
+            //                proc->copy(process[frame]);
+            //                b = true;
+            //            } else {
+            //                while ( process.find(frame) == process.end() ) {
+            //                    frame--;
+            //                    if ( frame < 0 ) break;
+            //                }
+            //                if ( frame >= 0 ) {
+            //                    proc->copy(process[frame]);
+            //                    b = true;
+            //                }
+            //            }
+            //
             int index = getProcessIndex(frame);
             if ( index > -1 ) {
                 proc->copy(process[index]);
@@ -241,7 +242,7 @@ namespace ofx { namespace vezer{
             return b;
         }
     };
-        
+    
     class Composition{
     public:
         bool state;
@@ -277,16 +278,19 @@ namespace ofx { namespace vezer{
             return false;
         }
     };
-
+    
     class Parser{
     protected:
         ofFbo fbo;
     public:
         vector<Composition> compositions;
     public:
+        Parser () : midi_as_osc(true){}
         
         vector<Composition> & getCompositions(){ return compositions; }
         Composition & getComposition(int index) { return compositions[index]; }
+        
+        bool midi_as_osc;
         
         void debugDraw(){
             if ( fbo.isAllocated() ) {
@@ -304,7 +308,7 @@ namespace ofx { namespace vezer{
             fbo.begin();
             ofEnableAlphaBlending();
             ofClear(0);
-        
+            
             float scale = w / float(comp.length);
             float hh = h / float(comp.tracks.size());
             if ( hh < 40 ) hh = 40;
@@ -370,7 +374,7 @@ namespace ofx { namespace vezer{
                 int numCompositoin = xml.getNumTags("composition");
                 for ( int i=0; i<numCompositoin; i++ ) {
                     xml.pushTag("composition", i);
-                
+                    
                     Composition comp;
                     comp.state = xml.getValue("state", "on") == "on";
                     comp.name = xml.getValue("name", "compositon");
@@ -395,7 +399,11 @@ namespace ofx { namespace vezer{
                                 track.max = xml.getValue("max", 1.0);
                                 
                                 if ( xml.pushTag("target") ) {
-                                    track.address = xml.getValue("address", "/exapmle");
+                                    if ( midi_as_osc && track.type == MIDI_NOTES ) {
+                                        track.address = track.name;
+                                    } else {
+                                        track.address = xml.getValue("address", "/exapmle");
+                                    }
                                     xml.popTag();
                                 }
                                 //scout << track.address << endl;
@@ -403,7 +411,7 @@ namespace ofx { namespace vezer{
                                     for ( int k=0; k<=comp.length; k++ ) {
                                         string n = "f" + ofToString(k);
                                         if ( xml.tagExists(n) ) {
-                                            if ( track.type == OSC_VALUE_INT ) {
+                                            if ( track.type == OSC_VALUE_INT || track.type == MIDI_NOTES ) {
                                                 track.process.push_back(Proc(track.address, k, (int)xml.getValue(n, 0) ));
                                             } else if ( track.type == OSC_VALUE_FLOAT ) {
                                                 track.process.push_back(Proc(track.address, k, xml.getValue(n, 0.0)));
@@ -540,8 +548,8 @@ namespace ofx { namespace vezer{
             tracks = use_tracks;
         }
     };
-
-        
+    
+    
 }}
 
 namespace ofxVezer = ofx::vezer;
