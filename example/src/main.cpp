@@ -4,6 +4,7 @@
 #include "ofMain.h"
 #ifdef USE_VEZER_XML
     #include "ofxVezer.h"
+    #include "ParserCereal.h"
 #else
     #include "ofxOsc.h"
 #endif
@@ -29,7 +30,8 @@ public:
         radius = 300;
         
 #ifdef USE_VEZER_XML
-        vector<ofxVezer::Composition> comps = parser.load("test2.xml");
+        //        vector<ofxVezer::Composition> comps = parser.load("test2.xml");
+        vector<ofxVezer::Composition> comps = ofxVezer::ParserCereal::load("test2.xml", "test2.bin");
         comp = comps[0];
         parser.redraw(comp);
 #else
