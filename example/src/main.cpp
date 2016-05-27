@@ -3,6 +3,7 @@
 
 #include "ofMain.h"
 #ifdef USE_VEZER_XML
+#define VEZER_USE_CEREAL
     #include "ofxVezer.h"
     #include "ParserCereal.h"
 #else

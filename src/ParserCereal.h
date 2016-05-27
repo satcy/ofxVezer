@@ -2,8 +2,6 @@
 
 #include "ofMain.h"
 
-#define VEZER_USE_CEREAL
-
 #ifdef VEZER_USE_CEREAL
 #include "Parser.h"
 #include "ofxCereal.h"
