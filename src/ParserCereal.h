@@ -2,7 +2,6 @@
 
 #include "ofMain.h"
 
-#ifdef VEZER_USE_CEREAL
 #include "Parser.h"
 #include "ofxCereal.h"
 
@@ -116,4 +115,3 @@ namespace ofx { namespace vezer{
         }
     };
 }}
-#endif
