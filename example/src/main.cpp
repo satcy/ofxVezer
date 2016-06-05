@@ -32,8 +32,9 @@ public:
         
 #ifdef USE_VEZER_XML
         //        vector<ofxVezer::Composition> comps = parser.load("test2.xml");
-        vector<ofxVezer::Composition> comps = ofxVezer::ParserCereal::load("test2.xml", "test2.bin");
+        vector<ofxVezer::Composition> comps = ofxVezer::ParserCereal::load("test.xml", "test.bin");
         comp = comps[0];
+        comp.combine(comps[1]);
         parser.redraw(comp);
 #else
         recv.setup(8000);

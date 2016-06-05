@@ -217,6 +217,27 @@ namespace ofx { namespace vezer{
         }
         return false;
     }
+    
+    bool Composition::combine(const Composition & other, bool priority){
+        if ( fps != other.fps ) {
+            //dont combine different fps Compositions that change the time speed.
+            return false;
+        }
+        if ( priority ) {
+            state = other.state;
+            name = other.name;
+            bpm = other.bpm;
+            loop = other.loop;
+        }
+        if ( length < other.length ) length = other.length;
+        if ( start > other.start ) start = other.start;
+        if ( end < other.end ) end = other.end;
+        
+        for ( int i=0; i<other.tracks.size(); i++ ) {
+            tracks.emplace_back(other.tracks[i]);
+        }
+        
+    }
 
     
 #pragma mark - Parser

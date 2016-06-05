@@ -102,6 +102,8 @@ namespace ofx { namespace vezer{
         vector<Track>& getCurrentTracks(int frame);
         
         bool getTrackByName(string name, Track & track);
+        
+        bool combine(const Composition & other, bool priority = false);
     };
     
     class Parser{
