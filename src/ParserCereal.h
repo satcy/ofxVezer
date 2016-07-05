@@ -1,5 +1,7 @@
 #pragma once
 
+//#define NOT_USE_CEREAL
+#ifdef NOT_USE_CEREAL
 #include "ofMain.h"
 
 #include "Parser.h"
