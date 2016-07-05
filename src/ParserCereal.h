@@ -117,3 +117,4 @@ namespace ofx { namespace vezer{
         }
     };
 }}
+#endif
