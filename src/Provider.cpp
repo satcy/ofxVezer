@@ -30,8 +30,9 @@ namespace ofx { namespace vezer{
     
     void Provider::setCurrentTracks(Composition & comp, int frame){
         if ( pre_frame > frame ) pre_frame = frame - 1;
+        if ( pre_frame == frame ) return;
         int c_frame = pre_frame + 1;
-        while ( pre_frame <= frame ) {
+        while ( c_frame <= frame ) {
             for ( int i=0; i<comp.tracks.size(); i++ ) {
                 string address = comp.tracks[i].address;
                 ofxOscMessage * m;
@@ -49,8 +50,9 @@ namespace ofx { namespace vezer{
     
     void Provider::sendOscCurrentTracks(Composition & comp, int frame, ofxOscSender & send){
         if ( pre_frame > frame ) pre_frame = frame - 1;
+        if ( pre_frame == frame ) return;
         int c_frame = pre_frame + 1;
-        while ( pre_frame <= frame ) {
+        while ( c_frame <= frame ) {
             for ( int i=0; i<comp.tracks.size(); i++ ) {
                 string address = comp.tracks[i].address;
                 ofxOscMessage m;
