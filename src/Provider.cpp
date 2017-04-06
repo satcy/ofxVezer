@@ -29,27 +29,39 @@ namespace ofx { namespace vezer{
     }
     
     void Provider::setCurrentTracks(Composition & comp, int frame){
-        for ( int i=0; i<comp.tracks.size(); i++ ) {
-            string address = comp.tracks[i].address;
-            ofxOscMessage * m;
-            ofxVezer::Proc proc;
-            if ( comp.tracks[i].getProcess(frame, &proc) ) {
-                m = new ofxOscMessage();
-                m->copy(proc);
-                addMessage(m);
+        if ( pre_frame > frame ) pre_frame = frame - 1;
+        int c_frame = pre_frame + 1;
+        while ( pre_frame <= frame ) {
+            for ( int i=0; i<comp.tracks.size(); i++ ) {
+                string address = comp.tracks[i].address;
+                ofxOscMessage * m;
+                ofxVezer::Proc proc;
+                if ( comp.tracks[i].getProcess(c_frame, &proc) ) {
+                    m = new ofxOscMessage();
+                    m->copy(proc);
+                    addMessage(m);
+                }
             }
+            c_frame++;
         }
+        pre_frame = frame;
     }
     
     void Provider::sendOscCurrentTracks(Composition & comp, int frame, ofxOscSender & send){
-        for ( int i=0; i<comp.tracks.size(); i++ ) {
-            string address = comp.tracks[i].address;
-            ofxOscMessage m;
-            ofxVezer::Proc proc;
-            if ( comp.tracks[i].getProcess(frame, &proc) ) {
-                send.sendMessage(proc);
+        if ( pre_frame > frame ) pre_frame = frame - 1;
+        int c_frame = pre_frame + 1;
+        while ( pre_frame <= frame ) {
+            for ( int i=0; i<comp.tracks.size(); i++ ) {
+                string address = comp.tracks[i].address;
+                ofxOscMessage m;
+                ofxVezer::Proc proc;
+                if ( comp.tracks[i].getProcess(frame, &proc) ) {
+                    send.sendMessage(proc);
+                }
             }
+            c_frame++;
         }
+        pre_frame = frame;
     }
     
         
