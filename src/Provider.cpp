@@ -55,7 +55,7 @@ namespace ofx { namespace vezer{
                 string address = comp.tracks[i].address;
                 ofxOscMessage m;
                 ofxVezer::Proc proc;
-                if ( comp.tracks[i].getProcess(frame, &proc) ) {
+                if ( comp.tracks[i].getProcess(c_frame, &proc) ) {
                     send.sendMessage(proc);
                 }
             }
