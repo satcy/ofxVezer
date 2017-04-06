@@ -14,8 +14,8 @@ namespace ofx { namespace vezer{
         bool hasWaitingMessages();
         bool getNextMessage( ofxOscMessage* message );
         void addMessage(ofxOscMessage * m);
-        void setCurrentTracks(Composition & comp, int frame);
-        void sendOscCurrentTracks(Composition & comp, int frame, ofxOscSender & send);
+        void setCurrentTracks(Composition & comp, int frame, bool catch_behind = false);
+        void sendOscCurrentTracks(Composition & comp, int frame, ofxOscSender & send, bool catch_behind = false);
     };
         
 }}
