@@ -44,7 +44,7 @@ namespace ofx { namespace vezer{
             setAddress(args[0]);
             
             for ( int i=1; i<args.size(); i++ ) {
-                //cout << args[i] << "," << isNumberString(args[i]) <<  endl;
+                //cout << i << ": " << args[i] << "," << isNumberString(args[i]) <<  endl;
                 if ( isNumberString(args[i]) ) {
                     float val = ofFromString<float>(args[i]);
                     addFloatArg(val);
@@ -57,7 +57,8 @@ namespace ofx { namespace vezer{
     }
     
     bool Proc::isNumberString(const string & s){
-        RegularExpression regEx("^[+-]?([0-9]*\.[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+|)");
+        RegularExpression regEx("[-+]?[0-9]+(\.[0-9]*)?");
+        //RegularExpression regEx("^[+-]?([0-9]*\.[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+|)");
         return regEx.match(s);
     }
     
