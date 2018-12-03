@@ -2,7 +2,7 @@
 #include "Provider.h"
 
 namespace ofx { namespace vezer{
-    
+    using namespace std;
     bool Provider::hasWaitingMessages(){
         int queue_length = (int)messages.size();
         return queue_length > 0;

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string.h>
 //#define NOT_USE_CEREAL
 #ifndef NOT_USE_CEREAL
 #include "ofMain.h"
@@ -37,7 +37,7 @@ namespace cereal
     {
         using namespace ofxVezer;
         Proc in;
-        string address;
+        std::string address;
         archive >> address;
         in.setAddress(address);
         archive >> in.frame;
@@ -52,7 +52,7 @@ namespace cereal
                 archive >> f;
                 in.addFloatArg(f);
             } else if (type == OFXOSC_TYPE_STRING) {
-                string s;
+                std::string s;
                 archive >> s;
                 in.addStringArg(s);
             } else {
@@ -99,11 +99,11 @@ namespace cereal
 namespace ofx { namespace vezer{
     class ParserCereal{
     public:
-        static vector<Composition> load(string xml_path, string bin_path){
+        static std::vector<Composition> load(std::string xml_path, std::string bin_path){
             ofFile xml(xml_path);
             ofFile bin(bin_path);
             
-            vector<Composition> comps;
+            std::vector<Composition> comps;
             if (!bin.exists() || filesystem::last_write_time(xml) > filesystem::last_write_time(bin)) {
                 Parser parser;
                 comps = parser.load(xml.getAbsolutePath());

@@ -1,14 +1,11 @@
 #pragma once
-
+#include <string.h>
 #include "ofMain.h"
 #include "ofxXmlSettings.h"
 #include "ofxOscMessage.h"
 
-#include "Poco/RegularExpression.h"
-using Poco::RegularExpression;
-
 namespace ofx { namespace vezer{
-    
+    using namespace std;
     class Parser;
     
     const string OSC_VALUE_INT = "OSCValue/int";

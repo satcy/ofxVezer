@@ -1,14 +1,15 @@
 #pragma once
-
+#include <string.h>
 #include "ofxVezer.h"
 #include "ofxOsc.h"
 
 namespace ofx { namespace vezer{
+    using namespace std;
     class Provider{
     private:
         int pre_frame;
     protected:
-        std::deque< ofxOscMessage* > messages;
+        deque< ofxOscMessage* > messages;
     public:
         Provider() : pre_frame(-1) {}
         bool hasWaitingMessages();

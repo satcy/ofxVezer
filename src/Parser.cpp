@@ -1,10 +1,10 @@
 
 
 #include "Parser.h"
-using Poco::RegularExpression;
+#include <regex>
 
 namespace ofx { namespace vezer{
-    
+    using namespace std;
 #pragma mark - Proc
     Proc::Proc(){
         type = 0;
@@ -57,9 +57,9 @@ namespace ofx { namespace vezer{
     }
     
     bool Proc::isNumberString(const string & s){
-        RegularExpression regEx("[-+]?[0-9]+(\.[0-9]*)?");
-        //RegularExpression regEx("^[+-]?([0-9]*\.[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+|)");
-        return regEx.match(s);
+        regex regEx("[-+]?[0-9]+(\\.[0-9]*)?");
+        smatch match;
+        return regex_match(s, match, regEx);
     }
     
     void Proc::copy( const Proc& other ){
@@ -273,7 +273,7 @@ namespace ofx { namespace vezer{
             
             ofFill();
             ofSetColor(0, 255, 0, 60);
-            ofRect(0, i*hh + 5, w, (hh - 5));
+            ofDrawRectangle(0, i*hh + 5, w, (hh - 5));
             ofNoFill();
             ofBeginShape();
             
@@ -301,13 +301,13 @@ namespace ofx { namespace vezer{
                     float x = frame*scale;
                     float y = (i+1)*hh - (hh - 5);
                     ofFill();
-                    ofRect(x, y, 1, (hh - 5));
+                    ofDrawRectangle(x, y, 1, (hh - 5));
                 } else if ( proc.type == Proc::TYPE_FLOAT_COLOR ) {
                     ofSetColor(proc.getArgAsFloat(0)*255, proc.getArgAsFloat(1)*255, proc.getArgAsFloat(2)*255);
                     float x = frame*scale;
                     float y = (i+1)*hh - (hh - 5);
                     ofFill();
-                    ofRect(x, y, scale, (hh - 5));
+                    ofDrawRectangle(x, y, scale, (hh - 5));
                 }
             }
             

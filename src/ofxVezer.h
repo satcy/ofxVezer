@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string.h>
 #include "Parser.h"
 #include "Provider.h"
 
