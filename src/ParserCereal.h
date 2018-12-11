@@ -1,6 +1,6 @@
 #pragma once
 #include <string.h>
-//#define NOT_USE_CEREAL
+#define NOT_USE_CEREAL
 #ifndef NOT_USE_CEREAL
 #include "ofMain.h"
 
