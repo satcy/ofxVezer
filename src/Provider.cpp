@@ -29,7 +29,7 @@ namespace ofx { namespace vezer{
     }
     
     void Provider::setCurrentTracks(Composition & comp, int frame, bool catch_behind){
-        if ( pre_frame > frame ) pre_frame = frame - 1;
+        if ( pre_frame > frame ) pre_frame = - 1;
         if ( pre_frame == frame ) return;
         int c_frame = pre_frame + 1;
         if ( !catch_behind ) c_frame = frame;
