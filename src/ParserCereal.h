@@ -42,7 +42,7 @@ namespace cereal
         in.setAddress(address);
         archive >> in.frame;
         archive >> in.type;
-        int numargs;
+        std::size_t numargs;
         archive >> numargs;
         for (int i=0; i<numargs; ++i) {
             unsigned char type = 0;
