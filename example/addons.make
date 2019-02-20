@@ -1,0 +1,4 @@
+ofxCereal
+ofxOsc
+ofxVezer
+ofxXmlSettings
